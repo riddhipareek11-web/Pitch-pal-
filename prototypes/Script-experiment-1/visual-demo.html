@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Script Generator - Visual Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [step, setStep] = useState(1);
+            const [briefText, setBriefText] = useState('');
+            const [canvaLink, setCanvaLink] = useState('');
+            const [selectedScriptType, setSelectedScriptType] = useState('bestMatch');
+
+            const mockScripts = {
+                simple: { hook: "Stop scrolling!", setup: "Tired of wasting time?", content: "Use this tool to save 10 hours a week.", cta: "Link in bio!" },
+                bestMatch: { hook: "Are you a Gen Z creator?", setup: "Editing takes forever, right?", content: "This new AI tool builds scripts in seconds. Just upload a brief.", cta: "Follow for more creator tips!" },
+                boldMove: { hook: "Your scripts suck.", setup: "But they don't have to.", content: "Let AI do the heavy lifting while you focus on filming.", cta: "Save this video right now." }
+            };
+
+            const sections = [
+                {key: 'hook', label: 'Hook (0-3s)'},
+                {key: 'setup', label: 'Setup (3-15s)'},
+                {key: 'content', label: 'Value/Content (15-45s)'},
+                {key: 'cta', label: 'CTA (Final 3-5s)'}
+            ];
+
+            return (
+                <div className="min-h-screen p-8">
+                  <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                    
+                    {/* Header */}
+                    <div className="bg-slate-900 p-6 text-white text-center">
+                        <h1 className="text-3xl font-bold mb-2">▶️ AI Script Generator</h1>
+                        <p className="text-slate-300">Transform briefs into high-converting short-form video scripts.</p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="flex border-b border-gray-100">
+                        {['Upload Brief', 'Review Strategy', 'Select Script', 'Edit & Export'].map((title, i) => (
+                            <div key={i} className={`flex-1 text-center py-4 text-sm font-medium ${step >= i+1 ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/10' : 'text-gray-400'}`}>
+                                Step {i+1}: {title}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-8">
+                      
+                      {step === 1 && (
+                        <div className="space-y-6">
+                          <h2 className="text-2xl font-bold">Provide Your Brief</h2>
+                          <p className="text-gray-600">Upload documents, paste a Canva link, or type the brief manually.</p>
+                          
+                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50">
+                              <div className="text-4xl mb-4">📄</div>
+                              <button className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-md font-medium">Browse Files</button>
+                              <p className="text-sm text-gray-500 mt-3">Supports PDF, Word, TXT, MD</p>
+                          </div>
+
+                          <div>
+                              <label className="block text-sm font-medium mb-2">Canva / Doc Link</label>
+                              <input type="text" placeholder="https://canva.com/..." className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+                          </div>
+
+                          <div>
+                              <label className="block text-sm font-medium mb-2">Brief Details</label>
+                              <textarea rows="4" placeholder="Tell us about the product..." className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                          </div>
+
+                          <div className="flex justify-end pt-4">
+                              <button onClick={() => setStep(2)} className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium">Analyze Brief ➔</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {step === 2 && (
+                        <div className="space-y-6">
+                          <h2 className="text-2xl font-bold">Review Strategy</h2>
+                          <p className="text-gray-600">The AI extracted the following. Feel free to tweak these.</p>
+                          
+                          <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl space-y-5">
+                              <div>
+                                  <label className="block text-sm font-bold text-blue-900 mb-1">Objective</label>
+                                  <input type="text" className="w-full border rounded p-3" defaultValue="Launch new product" />
+                              </div>
+                              <div>
+                                  <label className="block text-sm font-bold text-blue-900 mb-1">Target Audience</label>
+                                  <input type="text" className="w-full border rounded p-3" defaultValue="Gen Z, tech savvy" />
+                              </div>
+                              <div>
+                                  <label className="block text-sm font-bold text-blue-900 mb-1">Core Idea</label>
+                                  <textarea rows="2" className="w-full border rounded p-3" defaultValue="Make it look cool and effortless"></textarea>
+                              </div>
+                          </div>
+
+                          <div className="flex justify-between pt-4">
+                              <button onClick={() => setStep(1)} className="text-gray-500 font-medium">Back</button>
+                              <button onClick={() => setStep(3)} className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium">Generate Scripts ➔</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {step === 3 && (
+                        <div className="space-y-6">
+                          <div className="flex justify-between items-center">
+                              <h2 className="text-2xl font-bold">Your Generated Scripts</h2>
+                              <button className="bg-slate-900 text-white px-4 py-2 rounded-md text-sm font-medium">📋 Copy Script</button>
+                          </div>
+
+                          <div className="flex gap-4 bg-gray-100 p-1.5 rounded-lg">
+                              {['simple', 'bestMatch', 'boldMove'].map(type => (
+                                  <button 
+                                      key={type}
+                                      onClick={() => setSelectedScriptType(type)}
+                                      className={`flex-1 py-2.5 rounded-md font-medium capitalize ${selectedScriptType === type ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+                                  >
+                                      {type.replace(/([A-Z])/g, ' $1').trim()}
+                                  </button>
+                              ))}
+                          </div>
+
+                          <div className="space-y-4">
+                              {sections.map(section => (
+                                  <div key={section.key} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                                      <div className="bg-gray-50 px-4 py-3 border-b">
+                                          <h3 className="font-bold">{section.label}</h3>
+                                      </div>
+                                      <textarea 
+                                          className="w-full p-4 outline-none resize-none min-h-[80px]" 
+                                          defaultValue={mockScripts[selectedScriptType][section.key]}
+                                      ></textarea>
+                                  </div>
+                              ))}
+                          </div>
+
+                          <div className="flex justify-between pt-4">
+                              <button onClick={() => setStep(2)} className="text-gray-500 font-medium">Back</button>
+                              <button onClick={() => setStep(1)} className="text-indigo-600 font-medium">Start Over</button>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+                </div>
+            );
+        }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

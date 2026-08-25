@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+jspm_packages/
+web_modules/
+
+# Local env files (DO NOT COMMIT API KEYS)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
