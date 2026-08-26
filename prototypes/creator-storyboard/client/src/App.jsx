@@ -1,49 +1,101 @@
-import { useState } from 'react';
-import { Loader2, Image as ImageIcon, Clapperboard } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Loader2, Film } from 'lucide-react';
+import Stepper from './components/Stepper';
+import TemplateGallery from './components/TemplateGallery';
+import FrameCard from './components/FrameCard';
+import FrameSkeleton from './components/FrameSkeleton';
+import PitchPanel from './components/PitchPanel';
+
+const LOADING_MESSAGES = [
+  'Reading the brief…',
+  'Breaking the script into shots…',
+  'Sketching the first frame…',
+  'Filling in voiceover cues…',
+  'Almost there…',
+];
+
+const API_BASE = 'http://localhost:3001';
 
 function App() {
+  const [step, setStep] = useState(1);
+
+  // Advanced / technical settings - collapsed by default
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [textModel, setTextModel] = useState('gemini-2.5-flash');
-  const [imageModel, setImageModel] = useState('imagen-3.0-generate-002');
-  
+  const [textModel, setTextModel] = useState('gemini-3.6-flash');
+  const [imageModel, setImageModel] = useState('gemini-2.5-flash-image');
+
+  // Step 1: brief
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [contentGoal, setContentGoal] = useState('Brand promotion');
   const [targetAudience, setTargetAudience] = useState('');
   const [brief, setBrief] = useState('');
   const [script, setScript] = useState('');
-  
+
+  // Step 2: storyboard
   const [frames, setFrames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  // Step 3: pitch
+  const [creatorInfo, setCreatorInfo] = useState({
+    creatorName: '',
+    creatorNiche: '',
+    followers: '',
+    brandName: '',
+    product: '',
+  });
+  const [pitch, setPitch] = useState(null);
+  const [pitchLoading, setPitchLoading] = useState(false);
+  const [pitchError, setPitchError] = useState('');
+
+  const loadingTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (loading) {
+      setLoadingMessageIndex(0);
+      loadingTimerRef.current = setInterval(() => {
+        setLoadingMessageIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+      }, 1500);
+    } else if (loadingTimerRef.current) {
+      clearInterval(loadingTimerRef.current);
+    }
+    return () => clearInterval(loadingTimerRef.current);
+  }, [loading]);
+
+  const applyTemplate = (template) => {
+    setSelectedTemplateId(template.id);
+    setContentGoal(template.contentGoal);
+    setTargetAudience(template.targetAudience);
+    setBrief(template.brief);
+    setScript(template.script);
+    setCreatorInfo({
+      creatorName: template.creatorName,
+      creatorNiche: template.creatorNiche,
+      followers: template.followers,
+      brandName: template.brandName,
+      product: template.product,
+    });
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    if (!apiKey) {
-      setError('Please provide an API Key.');
-      return;
-    }
     if (!script) {
-      setError('Please provide a Script or Idea.');
+      setError('Add a script or step-by-step idea before generating.');
       return;
     }
 
     setLoading(true);
     setError('');
     setFrames([]);
+    setStep(2);
 
     try {
-      // Connect to the local Node.js Express backend running on 3001
-      const response = await fetch('http://localhost:3001/api/generate', {
+      const response = await fetch(`${API_BASE}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          apiKey,
-          textModel,
-          imageModel,
-          contentGoal,
-          targetAudience,
-          brief,
-          script
-        }),
+        body: JSON.stringify({ apiKey, textModel, imageModel, contentGoal, targetAudience, brief, script }),
       });
 
       const data = await response.json();
@@ -57,192 +109,263 @@ function App() {
     }
   };
 
+  const handleGeneratePitch = async () => {
+    setPitchLoading(true);
+    setPitchError('');
+    try {
+      const response = await fetch(`${API_BASE}/api/pitch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, textModel, script, ...creatorInfo }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate pitch');
+      setPitch(data.pitch);
+    } catch (err) {
+      setPitchError(err.message);
+    } finally {
+      setPitchLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen p-6 md:p-12 font-sans text-slate-800">
-      <div className="max-w-4xl mx-auto flex flex-col gap-8">
-        
+    <div className="min-h-screen font-sans text-ink">
+      <div className="max-w-4xl mx-auto px-6 md:px-12 py-10 flex flex-col gap-8">
         {/* Header */}
-        <div className="text-center pb-4 border-b border-gray-200">
-          <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
-            <Clapperboard className="w-8 h-8 text-indigo-600" />
-            Creator AI Storyboard App
+        <div className="text-center flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2 text-rust">
+            <Film className="w-6 h-6" />
+            <span className="text-xs font-bold uppercase tracking-[0.2em]">Storyboard Studio</span>
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink">
+            From brief to shootable storyboard - and a pitch ready to send
           </h1>
+          <p className="text-ink/60 text-sm max-w-xl">
+            Turn a creative brief into a shot-by-shot storyboard, then draft the outreach email or DM to send it to the brand.
+          </p>
         </div>
 
-        {/* Configuration & Inputs Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
-          <form onSubmit={handleGenerate} className="flex flex-col gap-6">
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2">API Key (Google AI Studio):</label>
-                <input 
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIzaSy... or similar"
-                  className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-indigo-500"
-                />
-              </div>
+        <Stepper current={step} />
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Text Generation Model:</label>
-                <select 
-                  value={textModel} 
-                  onChange={(e) => setTextModel(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-indigo-500 bg-white"
-                >
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                </select>
-              </div>
+        {step === 1 && (
+          <>
+            <TemplateGallery onSelect={applyTemplate} selectedId={selectedTemplateId} />
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Image Generation Model:</label>
-                <select 
-                  value={imageModel} 
-                  onChange={(e) => setImageModel(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-indigo-500 bg-white"
-                >
-                  <option value="imagen-3.0-generate-002">Google Imagen 3.0</option>
-                </select>
-              </div>
-            </div>
+            <div className="bg-card rounded-xl shadow-card border border-ink/10 p-6 md:p-8">
+              <form onSubmit={handleGenerate} className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Content goal</label>
+                    <select
+                      value={contentGoal}
+                      onChange={(e) => setContentGoal(e.target.value)}
+                      className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                    >
+                      <option value="Brand promotion">Brand promotion</option>
+                      <option value="Product review">Product review</option>
+                      <option value="Educational Reel">Educational Reel</option>
+                      <option value="Tutorial">Tutorial</option>
+                      <option value="Personal/Lifestyle">Personal / lifestyle content</option>
+                      <option value="Trend-based content">Trend-based content</option>
+                    </select>
+                  </div>
 
-            <div className="pt-4 mt-2 border-t border-gray-100">
-              <h2 className="text-lg font-bold mb-4">Pre Storyboard Inputs</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Content Goal</label>
-                  <select 
-                    value={contentGoal} 
-                    onChange={(e) => setContentGoal(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-indigo-500 bg-white"
-                  >
-                    <option value="Brand promotion">Brand promotion</option>
-                    <option value="Product review">Product review</option>
-                    <option value="Educational Reel">Educational Reel</option>
-                    <option value="Tutorial">Tutorial</option>
-                    <option value="Personal/Lifestyle">Personal/Lifestyle content</option>
-                    <option value="Trend-based content">Trend-based content</option>
-                  </select>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Target audience</label>
+                    <input
+                      type="text"
+                      value={targetAudience}
+                      onChange={(e) => setTargetAudience(e.target.value)}
+                      placeholder="Who are they? What is their problem or need?"
+                      className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                    />
+                  </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Target Audience</label>
-                  <input 
-                    type="text"
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                    placeholder="Who are they? What is their problem/need?"
-                    className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-indigo-500"
+                  <label className="block text-sm font-semibold mb-2">Brief / requirements</label>
+                  <textarea
+                    value={brief}
+                    onChange={(e) => setBrief(e.target.value)}
+                    placeholder="Paste the creative brief or outline here…"
+                    className="w-full border border-ink/15 rounded-md p-3 h-24 outline-none focus:border-rust resize-none bg-card"
                   />
                 </div>
-              </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-semibold mb-2">Brief / Requirements</label>
-                <textarea 
-                  value={brief}
-                  onChange={(e) => setBrief(e.target.value)}
-                  placeholder="Paste the creative brief or outline here..."
-                  className="w-full border border-gray-300 rounded-md p-3 h-24 outline-none focus:border-indigo-500 resize-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    Script / idea <span className="text-rust">*</span>
+                  </label>
+                  <textarea
+                    value={script}
+                    onChange={(e) => setScript(e.target.value)}
+                    placeholder="Write out the script, dialogue, or step-by-step actions…"
+                    className="w-full border border-ink/15 rounded-md p-3 h-32 outline-none focus:border-rust resize-none bg-card"
+                  />
+                </div>
 
+                <div className="border-t border-ink/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced((v) => !v)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink/50 hover:text-ink/80"
+                  >
+                    {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    Advanced settings
+                  </button>
+
+                  {showAdvanced && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold mb-2">
+                          API key <span className="text-ink/40 font-normal">(optional if set in server/.env)</span>
+                        </label>
+                        <input
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="Leave blank to use the server's key"
+                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">Text model</label>
+                        <select
+                          value={textModel}
+                          onChange={(e) => setTextModel(e.target.value)}
+                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                        >
+                          <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">Image model</label>
+                        <select
+                          value={imageModel}
+                          onChange={(e) => setImageModel(e.target.value)}
+                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                        >
+                          <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
+                          <option value="gemini-3.1-flash-image">Gemini 3.1 Flash Image</option>
+                        </select>
+                        <p className="text-xs text-ink/40 mt-1.5">
+                          Falls back to a free sketch renderer automatically if image generation isn't available on your account.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="bg-rust/10 text-rustDark p-4 rounded-md border border-rust/20 text-sm">{error}</div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-rust hover:bg-rustDark disabled:opacity-60 text-paper font-semibold py-3 px-6 rounded-md transition-colors w-full md:w-auto self-end flex items-center justify-center gap-2"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                  {loading ? 'Generating storyboard…' : 'Generate storyboard'}
+                </button>
+              </form>
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <div className="bg-card rounded-xl shadow-card border border-ink/10 p-6 md:p-8">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Script / Idea <span className="text-red-500">*</span>
-                </label>
-                <textarea 
-                  value={script}
-                  onChange={(e) => setScript(e.target.value)}
-                  placeholder="Write out the script, dialogue, or step-by-step actions..."
-                  className="w-full border border-gray-300 rounded-md p-3 h-32 outline-none focus:border-indigo-500 resize-none"
-                />
+                <h2 className="font-display text-2xl font-semibold text-ink">Your storyboard</h2>
+                <p className="text-sm text-ink/60">Visual shot list built from your script.</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-sm font-semibold text-ink/60 hover:text-ink"
+              >
+                ← Back to brief
+              </button>
             </div>
 
-            {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-md border border-red-200">
-                {error}
+            {loading && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center gap-2 text-sm text-ink/60 mb-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-rust" />
+                  {LOADING_MESSAGES[loadingMessageIndex]}
+                </div>
+                {[0, 1, 2].map((i) => (
+                  <FrameSkeleton key={i} index={i} />
+                ))}
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-md transition-colors w-full md:w-auto self-end flex items-center justify-center gap-2 mt-4"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-              {loading ? 'Generating Storyboard...' : 'Generate Storyboard'}
-            </button>
-
-          </form>
-        </div>
-
-        {/* Storyboard View Results */}
-        {frames.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-8">
-            <h2 className="text-2xl font-bold mb-8 font-serif uppercase tracking-wider text-center text-slate-700">
-              Generated Storyboard
-            </h2>
-            
-            <div className="flex flex-col gap-6">
-              {frames.map((frame, idx) => (
-                <div key={idx} className="flex flex-col md:flex-row gap-6 p-4 border-2 border-slate-200 rounded-lg bg-slate-50">
-                  
-                  {/* Left: Image (Sketch) */}
-                  <div className="w-full md:w-5/12 bg-white border border-slate-200 flex items-center justify-center rounded overflow-hidden relative" style={{ minHeight: '280px' }}>
-                    <div className="absolute top-2 left-2 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded shadow-sm z-10">
-                      FRAME {(idx + 1).toString().padStart(2, '0')}
-                    </div>
-                    {frame.imageUrl ? (
-                      <img 
-                        src={frame.imageUrl} 
-                        alt={frame.action}
-                        className="w-full h-full object-cover grayscale" // grayscale to emphasize the sketch nature
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 p-4 text-center">
-                        <ImageIcon className="w-12 h-12 mb-2 opacity-50" />
-                        <span className="text-sm">Image Generation Failed</span>
-                        {frame.imageError && <span className="text-xs text-red-400 mt-2">{frame.imageError}</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right: Text Content */}
-                  <div className="w-full md:w-7/12 flex flex-col gap-4">
-                    
-                    <div className="bg-white p-4 border border-slate-200 rounded shadow-sm flex-1">
-                      <h3 className="text-xs font-bold uppercase text-slate-500 mb-2 tracking-widest border-b border-slate-100 pb-1">
-                        Action
-                      </h3>
-                      <p className="text-slate-800 text-sm md:text-base whitespace-pre-wrap font-medium">
-                        {frame.action}
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-4 border border-slate-200 rounded shadow-sm flex-1">
-                      <h3 className="text-xs font-bold uppercase text-slate-500 mb-2 tracking-widest border-b border-slate-100 pb-1">
-                        Voiceover / Screen Text
-                      </h3>
-                      <p className="text-slate-700 text-sm md:text-base whitespace-pre-wrap italic font-serif">
-                        {frame.voiceover || '(No voiceover)'}
-                      </p>
-                    </div>
-
-                  </div>
+            {!loading && error && (
+              <div className="flex flex-col gap-4 items-start">
+                <div className="bg-rust/10 text-rustDark p-4 rounded-md border border-rust/20 text-sm w-full">
+                  {error}
                 </div>
-              ))}
-            </div>
-            
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="bg-ink hover:bg-ink/90 text-paper font-semibold py-2.5 px-5 rounded-md transition-colors text-sm"
+                >
+                  ← Back to brief
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && frames.length > 0 && (
+              <div className="flex flex-col gap-6">
+                {frames.map((frame, idx) => (
+                  <FrameCard key={idx} frame={frame} index={idx} />
+                ))}
+              </div>
+            )}
+
+            {!loading && !error && frames.length > 0 && (
+              <div className="flex justify-end mt-8 border-t border-ink/10 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  className="bg-ink hover:bg-ink/90 text-paper font-semibold py-2.5 px-5 rounded-md transition-colors text-sm"
+                >
+                  Approve & continue to pitch →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
+        {step === 3 && (
+          <>
+            <PitchPanel
+              creatorInfo={creatorInfo}
+              onCreatorInfoChange={setCreatorInfo}
+              script={script}
+              pitch={pitch}
+              loading={pitchLoading}
+              error={pitchError}
+              onGenerate={handleGeneratePitch}
+            />
+            <div className="flex justify-start">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="text-sm font-semibold text-ink/60 hover:text-ink"
+              >
+                ← Back to storyboard
+              </button>
+            </div>
+          </>
+        )}
+
+        <footer className="text-center text-xs text-ink/30 pt-6">
+          A student project exploring creator-to-brand pitch workflows.
+        </footer>
       </div>
     </div>
   );

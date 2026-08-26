@@ -3,5 +3,22 @@
 @tailwind utilities;
 
 body {
-  background-color: #f9fafb; /* gray-50 */
+  background-color: #FAF7F0;
+  color: #211D17;
+}
+
+::selection {
+  background-color: #C1502E;
+  color: #FAF7F0;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(33,29,23,0.06) 25%, rgba(33,29,23,0.12) 37%, rgba(33,29,23,0.06) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s linear infinite;
 }
