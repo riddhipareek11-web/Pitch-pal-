@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Film } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Zap, ArrowRight, ArrowLeft, Sparkles, Film, LogOut, CheckCircle2 } from 'lucide-react';
 import Stepper from './components/Stepper';
 import TemplateGallery from './components/TemplateGallery';
 import FrameCard from './components/FrameCard';
@@ -15,11 +15,11 @@ const signedInCreator = loadSignedInCreator();
 const GATEWAY_URL = 'http://localhost:3002';
 
 const LOADING_MESSAGES = [
-  'Reading the brief…',
-  'Breaking the script into shots…',
-  'Sketching the first frame…',
-  'Filling in voiceover cues…',
-  'Almost there…',
+  'Reading your brief…',
+  'Breaking the script into shot panels…',
+  'Sketching ink line-art storyboard…',
+  'Composing on-screen text & bubbles…',
+  'Finalizing shot-by-shot storyboard…',
 ];
 
 const API_BASE = 'http://localhost:3001';
@@ -48,9 +48,9 @@ function App() {
 
   // Step 3: pitch. Pre-filled from the gateway app's handoff when it sent one.
   const [creatorInfo, setCreatorInfo] = useState(() => ({
-    creatorName: signedInCreator.creatorName,
-    creatorNiche: signedInCreator.creatorNiche,
-    followers: signedInCreator.followers,
+    creatorName: signedInCreator.creatorName || 'Rizzzz',
+    creatorNiche: signedInCreator.creatorNiche || 'Beauty & Lifestyle',
+    followers: signedInCreator.followers || '45K',
     brandName: '',
     product: '',
   }));
@@ -81,9 +81,9 @@ function App() {
     // The brand half of a template is always useful, but never overwrite the
     // real signed-in creator with the template's sample persona.
     setCreatorInfo({
-      creatorName: signedInCreator.creatorName || template.creatorName,
-      creatorNiche: signedInCreator.creatorNiche || template.creatorNiche,
-      followers: signedInCreator.followers || template.followers,
+      creatorName: signedInCreator.creatorName || template.creatorName || 'Rizzzz',
+      creatorNiche: signedInCreator.creatorNiche || template.creatorNiche || 'Beauty & Lifestyle',
+      followers: signedInCreator.followers || template.followers || '45K',
       brandName: template.brandName,
       product: template.product,
     });
@@ -138,56 +138,116 @@ function App() {
     }
   };
 
+  const creatorInitial = (creatorInfo.creatorName || signedInCreator.creatorName || 'R')[0].toUpperCase();
+
   return (
-    <div className="min-h-screen font-sans text-ink">
-      <div className="max-w-4xl mx-auto px-6 md:px-12 py-10 flex flex-col gap-8">
-        {/* Header */}
-        <div className="text-center flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-rust">
-            <Film className="w-6 h-6" />
-            <span className="text-xs font-bold uppercase tracking-[0.2em]">Storyboard Studio</span>
+    <div className="min-h-screen bg-mesh-pastel text-slate-800 flex flex-col font-sans relative">
+      {/* Sparkle glints in background */}
+      <div className="absolute top-24 left-12 text-pink-300 text-xl select-none pointer-events-none animate-pulse-subtle">✦</div>
+      <div className="absolute top-48 right-16 text-purple-300 text-2xl select-none pointer-events-none animate-float">✨</div>
+      <div className="absolute bottom-32 left-20 text-sky-300 text-xl select-none pointer-events-none animate-pulse-subtle">✦</div>
+      <div className="absolute bottom-16 right-24 text-pink-300 text-2xl select-none pointer-events-none animate-float">✨</div>
+
+      {/* Global Navigation Header matching homescreen.pdf */}
+      <header className="glass-nav sticky top-0 z-50 px-6 md:px-12 py-3.5 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => (window.location.href = GATEWAY_URL)}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-2xl text-pink-500 font-extrabold flex items-center">
+              ⚡
+            </span>
+            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-rose-600 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
+              PitchPal
+            </span>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink">
-            From brief to shootable storyboard - and a pitch ready to send
+          <span className="hidden sm:inline-block text-[11px] font-bold uppercase tracking-wider text-pink-700 bg-pink-50 px-2.5 py-0.5 rounded-full border border-pink-200/70">
+            Storyboard Studio
+          </span>
+        </div>
+
+        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+          <a href={GATEWAY_URL} className="hover:text-pink-600 transition-colors">
+            Home
+          </a>
+          <a href={GATEWAY_URL} className="hover:text-pink-600 transition-colors">
+            My Pitches
+          </a>
+          <button onClick={() => setStep(1)} className="text-pink-600 font-bold transition-colors">
+            New Storyboard
+          </button>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <a
+            href={GATEWAY_URL}
+            className="text-xs font-bold text-slate-600 hover:text-pink-600 bg-white/80 border border-slate-200 hover:border-pink-200 px-3 py-1.5 rounded-full transition-all shadow-xs"
+          >
+            ← Gateway Dashboard
+          </a>
+
+          {/* User Avatar Circle */}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-rose-500 via-pink-500 to-fuchsia-500 text-white font-extrabold flex items-center justify-center text-sm shadow-md shadow-pink-500/20 border-2 border-white">
+            {creatorInitial}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-4xl mx-auto px-6 md:px-12 py-8 flex flex-col gap-8 flex-1 w-full z-10">
+        {/* Hero Tagline */}
+        <div className="text-center flex flex-col items-center gap-3">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-pink-200/80 bg-white/90 shadow-xs text-xs font-semibold text-pink-600">
+            <Sparkles className="w-3.5 h-3.5 text-pink-500 fill-pink-500/20" />
+            <span>AI-Powered Visual Storyboarding</span>
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            From Brief to Shootable Storyboard
           </h1>
-          <p className="text-ink/60 text-sm max-w-xl">
-            Turn a creative brief into a shot-by-shot storyboard, then draft the outreach email or DM to send it to the brand.
+          <p className="text-slate-600 text-sm md:text-base max-w-xl">
+            Break your campaign idea into an illustrated shot-by-shot storyboard with matching pitch outreach.
           </p>
 
           {signedInCreator.creatorName && (
-            <div className="mt-2 inline-flex items-center gap-2 text-xs bg-card border border-ink/10 rounded-full pl-3 pr-1.5 py-1 shadow-card">
-              <span className="text-ink/50">Signed in as</span>
-              <span className="font-semibold text-ink">{signedInCreator.creatorName}</span>
-              {signedInCreator.handle && <span className="text-ink/40">@{signedInCreator.handle}</span>}
+            <div className="mt-1 inline-flex items-center gap-2 text-xs bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-full pl-3 pr-2 py-1 shadow-xs">
+              <span className="text-slate-400 font-medium">Logged in as</span>
+              <span className="font-bold text-slate-800">{signedInCreator.creatorName}</span>
+              {signedInCreator.handle && <span className="text-pink-600 font-semibold">@{signedInCreator.handle}</span>}
               <button
                 type="button"
                 onClick={() => {
                   signOutCreator();
                   window.location.href = GATEWAY_URL;
                 }}
-                className="text-ink/40 hover:text-rust font-semibold px-2 py-0.5 rounded-full transition-colors"
+                className="text-slate-400 hover:text-rose-600 font-semibold text-[11px] px-2 py-0.5 rounded-full transition-colors flex items-center gap-1"
               >
-                Sign out
+                <LogOut className="w-3 h-3" />
               </button>
             </div>
           )}
         </div>
 
+        {/* Stepper */}
         <Stepper current={step} />
 
+        {/* STEP 1: BRIEF */}
         {step === 1 && (
-          <>
+          <div className="space-y-6">
             <TemplateGallery onSelect={applyTemplate} selectedId={selectedTemplateId} />
 
-            <div className="bg-card rounded-xl shadow-card border border-ink/10 p-6 md:p-8">
+            <div className="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <h2 className="text-xl font-bold text-slate-900">Define Your Creative Brief</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Customize your goal, audience, and step-by-step script</p>
+              </div>
+
               <form onSubmit={handleGenerate} className="flex flex-col gap-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Content goal</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Content Goal</label>
                     <select
                       value={contentGoal}
                       onChange={(e) => setContentGoal(e.target.value)}
-                      className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-pink-500 bg-white font-medium text-slate-800"
                     >
                       <option value="Brand promotion">Brand promotion</option>
                       <option value="Product review">Product review</option>
@@ -199,69 +259,73 @@ function App() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Target audience</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Target Audience</label>
                     <input
                       type="text"
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
-                      placeholder="Who are they? What is their problem or need?"
-                      className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                      placeholder="e.g. Gen Z beauty lovers, busy commuters, skincare beginners"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-pink-500 bg-white font-medium text-slate-800"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Brief / requirements</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Brief / Campaign Requirements</label>
                   <textarea
                     value={brief}
                     onChange={(e) => setBrief(e.target.value)}
-                    placeholder="Paste the creative brief or outline here…"
-                    className="w-full border border-ink/15 rounded-md p-3 h-24 outline-none focus:border-rust resize-none bg-card"
+                    placeholder="Paste the creative brief, key talking points, or requirements here…"
+                    className="w-full border border-slate-200 rounded-xl p-3 h-24 text-sm outline-none focus:ring-2 focus:ring-pink-500 resize-none bg-white font-medium text-slate-800"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    Script / idea <span className="text-rust">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Script / Step-by-Step Actions <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-xs text-slate-400">Audio & Visual cues</span>
+                  </div>
                   <textarea
                     value={script}
                     onChange={(e) => setScript(e.target.value)}
-                    placeholder="Write out the script, dialogue, or step-by-step actions…"
-                    className="w-full border border-ink/15 rounded-md p-3 h-32 outline-none focus:border-rust resize-none bg-card"
+                    placeholder="Describe each scene, action, hook, and dialogue step-by-step…"
+                    className="w-full border border-slate-200 rounded-xl p-3 h-32 text-sm outline-none focus:ring-2 focus:ring-pink-500 resize-none bg-white font-medium text-slate-800"
                   />
                 </div>
 
-                <div className="border-t border-ink/10 pt-4">
+                {/* Advanced Settings Drawer */}
+                <div className="border-t border-slate-100 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowAdvanced((v) => !v)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink/50 hover:text-ink/80"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-pink-600 transition-colors"
                   >
                     {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    Advanced settings
+                    Advanced Model Settings
                   </button>
 
                   {showAdvanced && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-slate-50/70 border border-slate-200/60 rounded-2xl">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold mb-2">
-                          API key <span className="text-ink/40 font-normal">(optional if set in server/.env)</span>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                          API Key <span className="text-slate-400 font-normal">(optional, server defaults to root .env)</span>
                         </label>
                         <input
                           type="password"
                           value={apiKey}
                           onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="Leave blank to use the server's key"
-                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                          placeholder="AIzaSy... / leave blank for server default"
+                          className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-pink-500 bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold mb-2">Text model</label>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Text Model</label>
                         <select
                           value={textModel}
                           onChange={(e) => setTextModel(e.target.value)}
-                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                          className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-pink-500 bg-white"
                         >
                           <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                           <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -269,85 +333,88 @@ function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold mb-2">Image model</label>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Image Model</label>
                         <select
                           value={imageModel}
                           onChange={(e) => setImageModel(e.target.value)}
-                          className="w-full border border-ink/15 rounded-md p-2.5 outline-none focus:border-rust bg-card"
+                          className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-pink-500 bg-white"
                         >
                           <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
                           <option value="gemini-3.1-flash-image">Gemini 3.1 Flash Image</option>
                         </select>
-                        <p className="text-xs text-ink/40 mt-1.5">
-                          Falls back to a free sketch renderer automatically if image generation isn't available on your account.
-                        </p>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {error && (
-                  <div className="bg-rust/10 text-rustDark p-4 rounded-md border border-rust/20 text-sm">{error}</div>
+                  <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 text-sm font-medium">
+                    ⚠️ {error}
+                  </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-rust hover:bg-rustDark disabled:opacity-60 text-paper font-semibold py-3 px-6 rounded-md transition-colors w-full md:w-auto self-end flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                  {loading ? 'Generating storyboard…' : 'Generate storyboard'}
-                </button>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading || !script}
+                    className="bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500 hover:from-rose-600 hover:to-fuchsia-600 disabled:opacity-50 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg shadow-pink-500/25 active:scale-95 flex items-center justify-center gap-2 text-sm"
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>{loading ? 'Generating Storyboard…' : 'Generate Visual Storyboard'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </form>
             </div>
-          </>
+          </div>
         )}
 
+        {/* STEP 2: STORYBOARD VIEW */}
         {step === 2 && (
-          <div className="bg-card rounded-xl shadow-card border border-ink/10 p-6 md:p-8">
-            <div className="flex items-center justify-between mb-8">
+          <div className="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="font-display text-2xl font-semibold text-ink">Your storyboard</h2>
-                <p className="text-sm text-ink/60">Visual shot list built from your script.</p>
+                <h2 className="text-2xl font-extrabold text-slate-900">Your Storyboard</h2>
+                <p className="text-sm text-slate-500">Visual shot breakdown generated from your script</p>
               </div>
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="text-sm font-semibold text-ink/60 hover:text-ink"
+                className="text-xs font-bold text-slate-600 hover:text-pink-600 flex items-center gap-1 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 transition-colors"
               >
-                ← Back to brief
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Brief
               </button>
             </div>
 
             {loading && (
-              <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-2 text-sm text-ink/60 mb-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-rust" />
-                  {LOADING_MESSAGES[loadingMessageIndex]}
+              <div className="flex flex-col gap-6 py-6">
+                <div className="flex items-center justify-center gap-2.5 text-sm font-bold text-pink-600 bg-pink-50/70 py-3 px-4 rounded-2xl border border-pink-200/60 max-w-md mx-auto">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>{LOADING_MESSAGES[loadingMessageIndex]}</span>
                 </div>
-                {[0, 1, 2].map((i) => (
+                {[0, 1, 2, 3].map((i) => (
                   <FrameSkeleton key={i} index={i} />
                 ))}
               </div>
             )}
 
             {!loading && error && (
-              <div className="flex flex-col gap-4 items-start">
-                <div className="bg-rust/10 text-rustDark p-4 rounded-md border border-rust/20 text-sm w-full">
+              <div className="flex flex-col gap-4 items-center text-center py-8">
+                <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 text-sm max-w-md">
                   {error}
                 </div>
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="bg-ink hover:bg-ink/90 text-paper font-semibold py-2.5 px-5 rounded-md transition-colors text-sm"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-full text-xs transition-colors"
                 >
-                  ← Back to brief
+                  ← Return to Brief
                 </button>
               </div>
             )}
 
             {!loading && !error && frames.length > 0 && (
-              <div className="flex flex-col gap-6">
+              <div className="space-y-6">
                 {frames.map((frame, idx) => (
                   <FrameCard key={idx} frame={frame} index={idx} />
                 ))}
@@ -355,21 +422,30 @@ function App() {
             )}
 
             {!loading && !error && frames.length > 0 && (
-              <div className="flex justify-end mt-8 border-t border-ink/10 pt-6">
+              <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 px-4 py-2"
+                >
+                  ← Edit Script
+                </button>
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="bg-ink hover:bg-ink/90 text-paper font-semibold py-2.5 px-5 rounded-md transition-colors text-sm"
+                  className="bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500 hover:from-rose-600 hover:to-fuchsia-600 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg shadow-pink-500/25 active:scale-95 flex items-center gap-2 text-sm"
                 >
-                  Approve & continue to pitch →
+                  <span>Approve & Continue to Pitch</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}
           </div>
         )}
 
+        {/* STEP 3: SEND PITCH */}
         {step === 3 && (
-          <>
+          <div className="space-y-4">
             <PitchPanel
               creatorInfo={creatorInfo}
               onCreatorInfoChange={setCreatorInfo}
@@ -383,20 +459,23 @@ function App() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="text-sm font-semibold text-ink/60 hover:text-ink"
+                className="text-xs font-bold text-slate-500 hover:text-pink-600 flex items-center gap-1 px-4 py-2 transition-colors"
               >
-                ← Back to storyboard
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Storyboard
               </button>
             </div>
-          </>
+          </div>
         )}
 
-        <footer className="text-center text-xs text-ink/30 pt-6">
-          A student project exploring creator-to-brand pitch workflows.
+        <footer className="text-center text-xs text-slate-400 pt-4 pb-8 flex items-center justify-center gap-2">
+          <span>⚡ PitchPal Creative Suite</span>
+          <span>•</span>
+          <span>AI-Powered Storyboard & Influencer Outreach</span>
         </footer>
-      </div>
+      </main>
     </div>
   );
 }
 
 export default App;
+

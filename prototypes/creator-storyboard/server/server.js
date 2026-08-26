@@ -390,3 +390,4 @@ app.listen(PORT, () => {
   console.log(`Storyboard API server running on http://localhost:${PORT}`);
   reportImageProviderStatus();
 });
+setInterval(() => {}, 1000);
