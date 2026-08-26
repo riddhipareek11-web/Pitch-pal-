@@ -30,3 +30,24 @@
 - **Step 1**: Upload files, paste Canva links, or type the brief.
 - **Step 2**: Gemini AI extracts Objective, Audience, and Core Idea. User can edit.
 - **Step 3 & 4**: Generates 3 scripts (Simple, Best Match, Bold). Strict text editor UI that preserves Hook, Setup, Content, CTA formatting. Export to clipboard.
+
+## Script-experiment-4: Brand Research Assistant
+
+### Description
+A self-contained prototype that does research on behalf of the creator rather than them manually researching and uploading documents. The creator inputs a brand name, and the system pulls real-time brand positioning, product data, competitor context, hook banks, and creator opportunity details from the web, synthesizing them into a multi-tab PitchPal research report.
+
+### How to Run
+
+#### 1. Backend Setup
+1. Open a terminal window.
+2. Navigate to `prototypes/Script-experiment-4/backend`: `cd prototypes/Script-experiment-4/backend`
+3. Run `npm install` (if not done already).
+4. Run `npm start` (Runs on http://localhost:5002).
+
+#### 2. Frontend Setup
+1. Open a new terminal window.
+2. Navigate to `prototypes/Script-experiment-4/frontend`: `cd prototypes/Script-experiment-4/frontend`
+3. Run `npm install` (if not done already).
+4. Run `npm run dev` (Runs on http://localhost:3001).
+5. Open `http://localhost:3001` in your browser.
+
