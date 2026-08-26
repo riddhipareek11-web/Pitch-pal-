@@ -341,8 +341,7 @@ function App() {
                   { id: 'profile', label: 'Brand Snapshot', icon: Compass },
                   { id: 'audience', label: 'Audience & Need', icon: UserCheck },
                   { id: 'products', label: 'Products & Benefits', icon: Layers },
-                  { id: 'strategy', label: 'Marketing Strategy', icon: BookOpen },
-                  { id: 'creator', label: 'Creator Toolkit', icon: Sparkles }
+                  { id: 'strategy', label: 'Marketing Strategy', icon: BookOpen }
                 ].map(tab => {
                   const Icon = tab.icon;
                   return (
@@ -550,101 +549,7 @@ function App() {
                   </div>
                 )}
 
-                {/* 5. Creator Toolkit */}
-                {activeTab === 'creator' && (
-                  <div className="space-y-6">
-                    {/* Core Messaging Pillars */}
-                    <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-3">
-                      <h4 className="font-semibold text-slate-200 text-sm uppercase tracking-wider text-indigo-400">Core Messaging Pillars</h4>
-                      <ul className="list-disc list-inside space-y-1.5 text-sm text-slate-300">
-                        {researchData.coreMessagingPillars?.map((pillar, idx) => (
-                          <li key={idx}>{pillar}</li>
-                        ))}
-                      </ul>
-                    </div>
 
-                    {/* Hooks and Angles split */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Hooks Bank */}
-                      <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl overflow-hidden">
-                        <div className="bg-slate-850 px-5 py-3.5 border-b border-slate-800 flex justify-between items-center">
-                          <h4 className="font-semibold text-slate-200 text-sm uppercase tracking-wider text-indigo-400">Hooks Bank</h4>
-                        </div>
-                        <div className="p-5 space-y-3">
-                          {researchData.previousHookBank?.map((hook, idx) => (
-                            <div key={idx} className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 relative group hover:border-slate-700 transition">
-                              <p className="text-xs text-slate-400 font-medium mb-1">Hook {idx+1}</p>
-                              <p className="text-slate-200 text-sm pr-8 font-serif italic">&ldquo;{hook}&rdquo;</p>
-                              <button
-                                onClick={() => copyToClipboard(hook, `hook-${idx}`)}
-                                className="absolute right-3 top-3 p-1 text-slate-500 hover:text-white rounded hover:bg-slate-900 transition"
-                                title="Copy Hook"
-                              >
-                                {copiedText === `hook-${idx}` ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* UGC Angles */}
-                      <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl overflow-hidden">
-                        <div className="bg-slate-850 px-5 py-3.5 border-b border-slate-800 flex justify-between items-center">
-                          <h4 className="font-semibold text-slate-200 text-sm uppercase tracking-wider text-indigo-400">Previous UGC Angles</h4>
-                        </div>
-                        <div className="p-5 space-y-3">
-                          {researchData.previousReelUgcAngles?.map((angle, idx) => (
-                            <div key={idx} className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 relative group hover:border-slate-700 transition">
-                              <p className="text-xs text-slate-400 font-medium mb-1">Angle {idx+1}</p>
-                              <p className="text-slate-200 text-sm pr-8">{angle}</p>
-                              <button
-                                onClick={() => copyToClipboard(angle, `angle-${idx}`)}
-                                className="absolute right-3 top-3 p-1 text-slate-500 hover:text-white rounded hover:bg-slate-900 transition"
-                                title="Copy Angle"
-                              >
-                                {copiedText === `angle-${idx}` ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Storyboard and CTAs */}
-                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-xl space-y-2">
-                        <h4 className="font-semibold text-slate-200 text-sm uppercase tracking-wider text-indigo-400">Visual Storyboard Direction</h4>
-                        <p className="text-slate-300 text-sm leading-relaxed">{researchData.visualStoryboardDirection}</p>
-                      </div>
-                      
-                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-xl space-y-3">
-                        <h4 className="font-semibold text-slate-200 text-sm uppercase tracking-wider text-indigo-400">CTA Bank</h4>
-                        <div className="space-y-2">
-                          {researchData.previousCta?.map((cta, idx) => (
-                            <div key={idx} className="bg-slate-950/40 border border-slate-800 rounded-lg p-2 flex items-center justify-between text-xs text-slate-300">
-                              <span className="truncate mr-4">{cta}</span>
-                              <button 
-                                onClick={() => copyToClipboard(cta, `cta-${idx}`)}
-                                className="text-slate-500 hover:text-white transition p-1"
-                              >
-                                {copiedText === `cta-${idx}` ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Creator Opportunity */}
-                    <div className="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-5 space-y-2">
-                      <h4 className="font-bold text-white text-base flex items-center gap-2">
-                        <Sparkles className="text-indigo-400 animate-pulse" size={18} />
-                        Pitch Opportunity Strategy
-                      </h4>
-                      <p className="text-slate-200 text-sm leading-relaxed">{researchData.creatorOpportunity}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}

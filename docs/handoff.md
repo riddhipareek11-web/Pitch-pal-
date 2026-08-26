@@ -51,3 +51,24 @@ A self-contained prototype that does research on behalf of the creator rather th
 4. Run `npm run dev` (Runs on http://localhost:3001).
 5. Open `http://localhost:3001` in your browser.
 
+## Script-experiment-5: Integrated Script & Storyboard Flow
+
+### Description
+An integrated prototype that stitches the complete creation flow: **Login -> Brief Input -> AI-powered Brief Analysis & Strategy -> 3-variation Script Editor -> 4-frame Visual Storyboard Generator**. The script generator view features an "Approve & Create Storyboard" button that transitions the approved script (concatenated Hook, Setup, Content, CTA) directly to the Storyboard builder. The Storyboard generator supports generating images via Hugging Face Access Token with a robust, zero-configuration fallback using Pollinations.ai.
+
+### How to Run
+
+#### 1. Backend Setup
+1. Open a terminal window.
+2. Navigate to `prototypes/Script-experiment-5/backend`: `cd prototypes/Script-experiment-5/backend`
+3. Run `npm install` (if not done already).
+4. Create a `.env` file containing your `GEMINI_API_KEY`.
+5. Run `npm start` (Runs on http://localhost:5003).
+
+#### 2. Frontend Setup
+1. Open a new terminal window.
+2. Navigate to `prototypes/Script-experiment-5/frontend`: `cd prototypes/Script-experiment-5/frontend`
+3. Run `npm install` (if not done already).
+4. Run `npm run dev` (Runs on http://localhost:3002).
+5. Open `http://localhost:3002` in your browser.
+
