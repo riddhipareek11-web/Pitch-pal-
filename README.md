@@ -2,7 +2,22 @@
 
 A tool for creators who need to turn a brand brief into a shootable video storyboard and a pitch email ready to send - without doing the writing, sketching, or outreach drafting by hand.
 
-## What it does
+## The two apps
+
+The project is two apps that hand off to each other:
+
+- **PitchPal** (`prototypes/Script-experiment-5`) is the gateway - sign-in, onboarding, and a dashboard of past pitches. It runs on port 3002.
+- **Storyboard Studio** (`prototypes/creator-storyboard`) is where the work happens - brief, storyboard, pitch. It runs on port 5173.
+
+Start at the gateway. Sign in there, then press **Open Storyboard Studio** on the dashboard and it carries your creator details across, so the pitch step arrives already filled in. The "Sign out" chip in the Studio header takes you back to the gateway.
+
+Storyboard Studio also runs perfectly well on its own - it just starts with an empty pitch form instead of a pre-filled one.
+
+### Signing in
+
+The gateway is a demo and never authenticates against anything. **Continue with demo account** signs you straight in as a sample creator, and the email and phone routes accept whatever you type - any phone number, any verification code. No real account or real data is needed at any point.
+
+## What Storyboard Studio does
 
 The app walks through three steps:
 
@@ -76,9 +91,21 @@ npm install
 npm run dev
 ```
 
-Vite will print a local URL, usually `http://localhost:5173`. Open that in your browser.
+Vite will print a local URL, usually `http://localhost:5173`. That is Storyboard Studio on its own - enough if you only want the storyboard and pitch tools.
 
-### 5. Use it
+### 5. Start the gateway (optional)
+
+To begin at the sign-in and dashboard instead, run PitchPal in a third terminal:
+
+```bash
+cd ../Script-experiment-5/frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3002`, press **Continue with demo account**, then **Open Storyboard Studio** on the dashboard.
+
+### 6. Use it
 
 Click one of the template cards on the first screen to try it with example content, or fill in your own content goal, audience, and script. Generating a storyboard usually takes 15-30 seconds since it calls the AI model once for the script breakdown and once per frame for the sketch image.
 

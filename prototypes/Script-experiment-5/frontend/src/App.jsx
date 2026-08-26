@@ -5,6 +5,31 @@ import { jsPDF } from 'jspdf';
 
 const API_BASE_URL = 'http://localhost:5003/api';
 
+// Where the Storyboard Studio app is served. This app is the gateway: you sign
+// in here, then hand off to Storyboard Studio to build the storyboard and pitch.
+const STORYBOARD_STUDIO_URL = 'http://localhost:5173';
+
+// Sample identity used by "Continue with demo account". Nothing here is real -
+// the gateway never authenticates against a backend.
+const DEMO_USER = {
+  name: 'Sam Ortiz',
+  instagramId: 'samortiz.eats',
+  niche: 'Local food & drink',
+  followers: '9.4K',
+};
+
+// Carries the signed-in creator across to Storyboard Studio, which runs on its
+// own origin and so cannot read this app's localStorage.
+function buildStudioUrl(user) {
+  const params = new URLSearchParams({
+    creator: user?.name || '',
+    handle: user?.instagramId || '',
+    niche: user?.niche || '',
+    followers: user?.followers || '',
+  });
+  return `${STORYBOARD_STUDIO_URL}/?${params.toString()}`;
+}
+
 const AutoResizeTextarea = ({ value, onChange, className }) => {
   const textareaRef = React.useRef(null);
 
@@ -592,6 +617,28 @@ function App() {
                 <Phone className="w-5 h-5" />
                 <span>Login with Phone Number</span>
               </button>
+
+              <div className="flex items-center gap-3 pt-1">
+                <span className="h-px flex-1 bg-gray-200" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">or</span>
+                <span className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              {/* Demo gateway: skips straight in with sample data, no real account. */}
+              <button
+                onClick={() => {
+                  setUser(DEMO_USER);
+                  localStorage.setItem('pitchpal_user', JSON.stringify(DEMO_USER));
+                  setStep('welcome');
+                }}
+                className="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-600 border border-dashed border-gray-300 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-500" />
+                <span>Continue with demo account</span>
+              </button>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Demo mode - no real account, no verification. Any details you type are accepted.
+              </p>
             </div>
           </div>
         )}
@@ -679,8 +726,8 @@ function App() {
             </div>
 
             <div className="bg-slate-50 border border-dashed border-gray-200 p-4 rounded-xl text-center space-y-1">
-              <p className="text-xs text-slate-500 font-semibold tracking-wider">DEMO VERIFICATION CODE</p>
-              <p className="text-xl font-bold text-indigo-600 tracking-widest">4821</p>
+              <p className="text-xs text-slate-500 font-semibold tracking-wider">DEMO MODE</p>
+              <p className="text-sm font-semibold text-indigo-600">Type any 4 digits - nothing is verified</p>
             </div>
 
             <div className="space-y-5">
@@ -728,12 +775,9 @@ function App() {
 
               <button
                 onClick={() => {
-                  const code = otpInput.join('');
-                  if (code === '4821') {
-                    setStep('onboarding');
-                  } else {
-                    setOtpError('Invalid code. Please enter the demo code 4821.');
-                  }
+                  // Demo gateway: no real verification, any code gets you in.
+                  setOtpError('');
+                  setStep('onboarding');
                 }}
                 className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               >
@@ -846,7 +890,7 @@ function App() {
                 </p>
               </div>
 
-              <div className="pt-2 max-w-xs mx-auto">
+              <div className="pt-2 max-w-sm mx-auto space-y-3">
                 <button
                   onClick={() => {
                     setStep(1);
@@ -860,6 +904,19 @@ function App() {
                   <span>🚀 Pitch a New Brand</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
+
+                {/* Gateway handoff into the Storyboard Studio app. */}
+                <a
+                  href={buildStudioUrl(user)}
+                  className="w-full py-3.5 px-6 bg-white hover:bg-slate-50 text-slate-800 border border-gray-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 transform duration-150"
+                >
+                  <Laptop className="w-4 h-4 text-indigo-600" />
+                  <span>Open Storyboard Studio</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Builds a shot-by-shot storyboard and a ready-to-send pitch. Signs you in there automatically.
+                </p>
               </div>
             </div>
 

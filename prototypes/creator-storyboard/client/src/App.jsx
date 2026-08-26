@@ -5,6 +5,14 @@ import TemplateGallery from './components/TemplateGallery';
 import FrameCard from './components/FrameCard';
 import FrameSkeleton from './components/FrameSkeleton';
 import PitchPanel from './components/PitchPanel';
+import { loadSignedInCreator, signOutCreator } from './lib/session';
+
+// Read once at module load, before any component renders, so the pitch form can
+// start out already filled in for whoever the gateway signed in.
+const signedInCreator = loadSignedInCreator();
+
+// Where the gateway app lives, for the "sign out" trip back to it.
+const GATEWAY_URL = 'http://localhost:3002';
 
 const LOADING_MESSAGES = [
   'Reading the brief…',
@@ -38,14 +46,14 @@ function App() {
   const [error, setError] = useState('');
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
-  // Step 3: pitch
-  const [creatorInfo, setCreatorInfo] = useState({
-    creatorName: '',
-    creatorNiche: '',
-    followers: '',
+  // Step 3: pitch. Pre-filled from the gateway app's handoff when it sent one.
+  const [creatorInfo, setCreatorInfo] = useState(() => ({
+    creatorName: signedInCreator.creatorName,
+    creatorNiche: signedInCreator.creatorNiche,
+    followers: signedInCreator.followers,
     brandName: '',
     product: '',
-  });
+  }));
   const [pitch, setPitch] = useState(null);
   const [pitchLoading, setPitchLoading] = useState(false);
   const [pitchError, setPitchError] = useState('');
@@ -70,10 +78,12 @@ function App() {
     setTargetAudience(template.targetAudience);
     setBrief(template.brief);
     setScript(template.script);
+    // The brand half of a template is always useful, but never overwrite the
+    // real signed-in creator with the template's sample persona.
     setCreatorInfo({
-      creatorName: template.creatorName,
-      creatorNiche: template.creatorNiche,
-      followers: template.followers,
+      creatorName: signedInCreator.creatorName || template.creatorName,
+      creatorNiche: signedInCreator.creatorNiche || template.creatorNiche,
+      followers: signedInCreator.followers || template.followers,
       brandName: template.brandName,
       product: template.product,
     });
@@ -143,6 +153,24 @@ function App() {
           <p className="text-ink/60 text-sm max-w-xl">
             Turn a creative brief into a shot-by-shot storyboard, then draft the outreach email or DM to send it to the brand.
           </p>
+
+          {signedInCreator.creatorName && (
+            <div className="mt-2 inline-flex items-center gap-2 text-xs bg-card border border-ink/10 rounded-full pl-3 pr-1.5 py-1 shadow-card">
+              <span className="text-ink/50">Signed in as</span>
+              <span className="font-semibold text-ink">{signedInCreator.creatorName}</span>
+              {signedInCreator.handle && <span className="text-ink/40">@{signedInCreator.handle}</span>}
+              <button
+                type="button"
+                onClick={() => {
+                  signOutCreator();
+                  window.location.href = GATEWAY_URL;
+                }}
+                className="text-ink/40 hover:text-rust font-semibold px-2 py-0.5 rounded-full transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
 
         <Stepper current={step} />
