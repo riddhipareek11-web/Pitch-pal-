@@ -30,11 +30,8 @@ During development, we encountered and solved several critical challenges regard
 
 ### 3. Google AI Studio Native Image Quotas
 * **Issue:** We attempted to switch the image generation to Google's native multimodal model (`gemini-2.5-flash-image`) to consolidate everything under one API key. However, Google enforces a strict `limit: 0` quota on free-tier accounts for image generation in certain regions/ages to prevent spam.
-* **Fix:** To keep the app 100% free without requiring the user to attach a credit card to Google Cloud Billing, we pivoted to the **Hugging Face Free Inference API**. We added a second input box for a Hugging Face Access Token, allowing the user to generate high-quality images completely for free.
-
-### 4. Hugging Face CORS Blocks (Failed to fetch)
-* **Issue:** When running the app directly from the hard drive (`file:///index.html`), the browser blocked the Hugging Face API requests due to CORS (Cross-Origin Resource Sharing) security rules, throwing a "Failed to fetch" error.
-* **Fix:** We spun up a background Python web server (`python3 -m http.server 8000`) and opened the app via `http://localhost:8000`. By serving the file through localhost instead of a raw file path, the browser considers it a secure origin and allows the Hugging Face API requests to go through.
+* **Fix:** After trying Hugging Face and running into DNS issues, and then considering Pollinations AI, the user explicitly decided to proceed with adding their credit card to unlock the paid **Google AI Studio (`gemini-2.5-flash-image`)** model.
+* **UI/UX Cost Optimization:** Because Google AI Studio charges $0.03 per image, we removed automatic image generation and instead placed a **"Generate Frame (~$0.03)"** button inside each individual storyboard panel. This lets the user test their script (which is virtually free) and only pay for images when they are absolutely ready.
 
 ## How to Run the App
 1. Open `index.html` in any modern web browser (e.g., Google Chrome).
