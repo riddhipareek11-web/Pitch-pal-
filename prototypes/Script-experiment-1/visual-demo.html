@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
@@ -16,19 +17,65 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect, useRef } = React;
+        const { jsPDF } = window.jspdf;
+
+        const AutoResizeTextarea = ({ value, onChange, className }) => {
+            const textareaRef = useRef(null);
+
+            const adjustHeight = () => {
+                const textarea = textareaRef.current;
+                if (textarea) {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = `${textarea.scrollHeight}px`;
+                }
+            };
+
+            useEffect(() => {
+                adjustHeight();
+            }, [value]);
+
+            return (
+                <textarea
+                    ref={textareaRef}
+                    className={className}
+                    value={value}
+                    onChange={(e) => {
+                        if (onChange) onChange(e);
+                        adjustHeight();
+                    }}
+                    rows={1}
+                />
+            );
+        };
 
         function App() {
             const [step, setStep] = useState(1);
             const [briefText, setBriefText] = useState('');
             const [canvaLink, setCanvaLink] = useState('');
+            const [selectedFiles, setSelectedFiles] = useState([]);
             const [selectedScriptType, setSelectedScriptType] = useState('bestMatch');
 
-            const mockScripts = {
+            const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+            const dropdownRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                        setIsDropdownOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => {
+                    document.removeEventListener('mousedown', handleClickOutside);
+                };
+            }, []);
+
+            const [scripts, setScripts] = useState({
                 simple: { hook: "Stop scrolling!", setup: "Tired of wasting time?", content: "Use this tool to save 10 hours a week.", cta: "Link in bio!" },
                 bestMatch: { hook: "Are you a Gen Z creator?", setup: "Editing takes forever, right?", content: "This new AI tool builds scripts in seconds. Just upload a brief.", cta: "Follow for more creator tips!" },
                 boldMove: { hook: "Your scripts suck.", setup: "But they don't have to.", content: "Let AI do the heavy lifting while you focus on filming.", cta: "Save this video right now." }
-            };
+            });
 
             const sections = [
                 {key: 'hook', label: 'Hook (0-3s)'},
@@ -36,6 +83,115 @@
                 {key: 'content', label: 'Value/Content (15-45s)'},
                 {key: 'cta', label: 'CTA (Final 3-5s)'}
             ];
+
+            const handleCopyScript = () => {
+                const s = scripts[selectedScriptType];
+                const textToCopy = `HOOK (0-3s):\n${s.hook}\n\nSETUP (3-15s):\n${s.setup}\n\nCONTENT (15-45s):\n${s.content}\n\nCTA (3-5s):\n${s.cta}`;
+                navigator.clipboard.writeText(textToCopy);
+                alert("Script copied to clipboard!");
+            };
+
+            const handleDownloadPDF = () => {
+                const s = scripts[selectedScriptType];
+                const doc = new jsPDF();
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.setTextColor(15, 23, 42);
+                doc.text("AI Generated Script", 20, 20);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
+                doc.setTextColor(71, 85, 105);
+                const readableType = selectedScriptType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                doc.text(`Variation: ${readableType}`, 20, 30);
+                
+                doc.setDrawColor(226, 232, 240);
+                doc.line(20, 35, 190, 35);
+                
+                let yOffset = 48;
+                const docSections = [
+                  { label: "HOOK (0-3s)", text: s.hook },
+                  { label: "SETUP (3-15s)", text: s.setup },
+                  { label: "VALUE/CONTENT (15-45s)", text: s.content },
+                  { label: "CTA (Final 3-5s)", text: s.cta }
+                ];
+                
+                docSections.forEach(sec => {
+                  if (yOffset > 270) {
+                    doc.addPage();
+                    yOffset = 20;
+                  }
+                  
+                  doc.setFont("helvetica", "bold");
+                  doc.setFontSize(14);
+                  doc.setTextColor(79, 70, 229);
+                  doc.text(sec.label, 20, yOffset);
+                  yOffset += 8;
+                  
+                  doc.setFont("helvetica", "normal");
+                  doc.setFontSize(11);
+                  doc.setTextColor(30, 41, 59);
+                  
+                  const lines = doc.splitTextToSize(sec.text, 170);
+                  lines.forEach(line => {
+                    if (yOffset > 280) {
+                      doc.addPage();
+                      yOffset = 20;
+                    }
+                    doc.text(line, 20, yOffset);
+                    yOffset += 6;
+                  });
+                  
+                  yOffset += 10;
+                });
+                
+                doc.save(`script-${selectedScriptType}.pdf`);
+            };
+
+            const handleDownloadDoc = () => {
+                const s = scripts[selectedScriptType];
+                const scriptTitle = `Script - ${selectedScriptType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}`;
+                const docContent = `
+                  <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                  <head>
+                    <title>${scriptTitle}</title>
+                    <style>
+                      body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333333; padding: 20px; }
+                      h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 24px; }
+                      h2 { color: #4f46e5; margin-top: 24px; font-size: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+                      p { margin-bottom: 12px; font-size: 14px; white-space: pre-wrap; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>${scriptTitle}</h1>
+                    
+                    <h2>HOOK (0-3s)</h2>
+                    <p>${s.hook.replace(/\n/g, '<br/>')}</p>
+                    
+                    <h2>SETUP (3-15s)</h2>
+                    <p>${s.setup.replace(/\n/g, '<br/>')}</p>
+                    
+                    <h2>VALUE/CONTENT (15-45s)</h2>
+                    <p>${s.content.replace(/\n/g, '<br/>')}</p>
+                    
+                    <h2>CTA (Final 3-5s)</h2>
+                    <p>${s.cta.replace(/\n/g, '<br/>')}</p>
+                  </body>
+                  </html>
+                `;
+                const blob = new Blob(['\ufeff' + docContent], {
+                  type: 'application/msword'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `script-${selectedScriptType}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
 
             return (
                 <div className="min-h-screen p-8">
@@ -63,10 +219,41 @@
                           <h2 className="text-2xl font-bold">Provide Your Brief</h2>
                           <p className="text-gray-600">Upload documents, paste a Canva link, or type the brief manually.</p>
                           
-                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50">
+                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100/50 transition-colors">
                               <div className="text-4xl mb-4">📄</div>
-                              <button className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-md font-medium">Browse Files</button>
+                              <label className="cursor-pointer bg-indigo-50 text-indigo-700 px-4 py-2 rounded-md font-medium hover:bg-indigo-100 transition-colors inline-block">
+                                  Browse Files
+                                  <input 
+                                      type="file" 
+                                      className="hidden" 
+                                      accept=".pdf,.doc,.docx,.txt,.md" 
+                                      multiple 
+                                      onChange={(e) => {
+                                          const files = Array.from(e.target.files);
+                                          setSelectedFiles(prev => [...prev, ...files]);
+                                      }} 
+                                  />
+                              </label>
                               <p className="text-sm text-gray-500 mt-3">Supports PDF, Word, TXT, MD</p>
+                              
+                              {selectedFiles.length > 0 && (
+                                  <div className="mt-4 space-y-2 max-w-md mx-auto text-left">
+                                      {selectedFiles.map((file, idx) => (
+                                          <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-md border border-gray-100 shadow-sm">
+                                              <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
+                                                  <span className="shrink-0 text-indigo-500">📄</span>
+                                                  <span className="truncate">{file.name}</span>
+                                              </div>
+                                              <button 
+                                                  onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} 
+                                                  className="text-gray-400 hover:text-red-500 text-xs font-bold px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+                                              >
+                                                  ✕
+                                              </button>
+                                          </div>
+                                      ))}
+                                  </div>
+                              )}
                           </div>
 
                           <div>
@@ -114,9 +301,46 @@
 
                       {step === 3 && (
                         <div className="space-y-6">
-                          <div className="flex justify-between items-center">
-                              <h2 className="text-2xl font-bold">Your Generated Scripts</h2>
-                              <button className="bg-slate-900 text-white px-4 py-2 rounded-md text-sm font-medium">📋 Copy Script</button>
+                          <div className="flex justify-between items-center flex-wrap gap-4">
+                              <div>
+                                  <h2 className="text-2xl font-bold">Your Generated Scripts</h2>
+                                  <p className="text-gray-600">Select a variation and edit the text directly.</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                  <button onClick={handleCopyScript} className="bg-slate-900 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5">
+                                      📋 Copy Script
+                                  </button>
+                                  <div className="relative" ref={dropdownRef}>
+                                      <button 
+                                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                          className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5"
+                                      >
+                                          📥 Download Script
+                                      </button>
+                                      {isDropdownOpen && (
+                                          <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1">
+                                              <button 
+                                                  onClick={() => {
+                                                      handleDownloadPDF();
+                                                      setIsDropdownOpen(false);
+                                                  }} 
+                                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                              >
+                                                  Download PDF
+                                              </button>
+                                              <button 
+                                                  onClick={() => {
+                                                      handleDownloadDoc();
+                                                      setIsDropdownOpen(false);
+                                                  }} 
+                                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t border-gray-100"
+                                              >
+                                                  Download Word (.doc)
+                                              </button>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
                           </div>
 
                           <div className="flex gap-4 bg-gray-100 p-1.5 rounded-lg">
@@ -137,10 +361,15 @@
                                       <div className="bg-gray-50 px-4 py-3 border-b">
                                           <h3 className="font-bold">{section.label}</h3>
                                       </div>
-                                      <textarea 
-                                          className="w-full p-4 outline-none resize-none min-h-[80px]" 
-                                          defaultValue={mockScripts[selectedScriptType][section.key]}
-                                      ></textarea>
+                                      <AutoResizeTextarea 
+                                          className="w-full p-4 outline-none resize-none overflow-hidden min-h-[80px]" 
+                                          value={scripts[selectedScriptType][section.key]}
+                                          onChange={e => {
+                                              const newScripts = {...scripts};
+                                              newScripts[selectedScriptType][section.key] = e.target.value;
+                                              setScripts(newScripts);
+                                          }}
+                                      />
                                   </div>
                               ))}
                           </div>

@@ -45,17 +45,19 @@ async function extractTextFromFile(file) {
 }
 
 // Endpoint 1: Analyze Brief (Step 1 -> Step 2)
-app.post('/api/analyze', upload.single('file'), async (req, res) => {
+app.post('/api/analyze', upload.array('files'), async (req, res) => {
     try {
         const { text, canvaLink } = req.body;
-        const file = req.file;
+        const files = req.files || [];
 
         let combinedBrief = text || "";
         if (canvaLink) combinedBrief += `\nCanva Link provided: ${canvaLink}`;
         
-        if (file) {
-            const fileText = await extractTextFromFile(file);
-            combinedBrief += `\nDocument Content:\n${fileText}`;
+        if (files.length > 0) {
+            for (const file of files) {
+                const fileText = await extractTextFromFile(file);
+                combinedBrief += `\nDocument (${file.originalname}) Content:\n${fileText}`;
+            }
         }
 
         if (!combinedBrief.trim()) {
@@ -63,7 +65,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
         }
 
         // Call Gemini to analyze the brief
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
         const prompt = `
             Analyze the following brand/product brief and extract the key information.
             Format the output STRICTLY as a JSON object with the following keys:
@@ -102,7 +104,7 @@ app.post('/api/generate', async (req, res) => {
     try {
         const { objective, audience, coreIdea } = req.body;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
         const prompt = `
             You are an expert short-form video scriptwriter (e.g., for Instagram Reels, TikTok).
             Based on the following parameters:
@@ -149,5 +151,5 @@ app.post('/api/generate', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(\`Server is running on port \${PORT}\`);
+    console.log(`Server is running on port ${PORT}`);
 });
